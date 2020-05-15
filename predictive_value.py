@@ -3,66 +3,70 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
-has_problem = 0.1
-no_problem = 1-has_problem
+
+class PVCalculator:
+
+    def __init__(self, has_problem, the_sensitivity, the_specificity):
+        self.has_problem = has_problem
+        self.no_problem = 1 - has_problem
+        self.sensitivity = the_sensitivity
+        self.specificity = the_specificity
+
+    def prob_has_problem_tests_positive(self):
+        return self.has_problem*self.sensitivity
+
+    def prob_has_problem_tests_negative(self):
+        return self.has_problem*(1-self.sensitivity)
+
+    def prob_no_problem_tests_positive(self):
+        return self.no_problem*(1-self.specificity)
+
+    def prob_no_problem_tests_negative(self):
+        return self.no_problem*self.specificity
+
+    def ppv(self):
+        return self.prob_has_problem_tests_positive() / \
+               (self.prob_has_problem_tests_positive() + self.prob_no_problem_tests_positive())
+
+    def npv(self):
+        return self.prob_no_problem_tests_negative() / \
+               (self.prob_has_problem_tests_negative() + self.prob_no_problem_tests_negative())
 
 
-def prob_has_problem_tests_positive():
-    return has_problem*sensitivity
+def draw_graph(dataframe, metric_type, y_name):
+    plt.figure()
+    ax = sns.lineplot(x=dataframe[metric_type], y=dataframe[y_name])
+    ax.set(xlabel=f"{metric_type.title()} (%)", ylabel=f"{y_name.upper()} (%)")
+    plt.ylim(0, 100)
+    plt.xlim(0, 100)
+    plt.savefig(f"{y_name}__vary_{metric_type}.png")
 
 
-def prob_has_problem_tests_negative():
-    return has_problem*(1-sensitivity)
+prevalence = 0.5
 
-
-def prob_no_problem_tests_positive():
-    return no_problem*(1-specificity)
-
-
-def prob_no_problem_tests_negative():
-    return no_problem*specificity
-
-
-ppvs = pd.DataFrame()
+pvs = pd.DataFrame()
 specificity = 0.99
-sensitivity = 0.00
+sensitivity = 0.99
 for sens_raw in range(1, 101):
     sensitivity = (sens_raw * 0.01)
-    ppv = prob_has_problem_tests_positive() / (prob_has_problem_tests_positive() + prob_no_problem_tests_positive())
-    row = pd.DataFrame({"sensitivity": [sensitivity*100], "ppv": [ppv*100]})
-    ppvs = ppvs.append(row, ignore_index=True)
-plt.figure()
+    ppv = PVCalculator(prevalence, sensitivity, specificity).ppv()
+    npv = PVCalculator(prevalence, sensitivity, specificity).npv()
+    row = pd.DataFrame({"sensitivity": [sensitivity*100], "ppv": [ppv*100], "npv": [npv*100]})
+    pvs = pvs.append(row, ignore_index=True)
 
-ax = sns.lineplot(x=ppvs["sensitivity"], y=ppvs["ppv"])
-ax.set(xlabel="Sensitivity (%)", ylabel="Positive Predictive Value (%)")
-plt.savefig('vary_sensitivity.png')
+draw_graph(pvs, "sensitivity", "ppv")
+draw_graph(pvs, "sensitivity", "npv")
 
-print(ppvs.head(20))
-print(ppvs.tail(20))
 
-ppvs = pd.DataFrame()
-specificity = 0.00
+pvs = pd.DataFrame()
+specificity = 0.99
 sensitivity = 0.99
 for spec_raw in range(1, 101):
     specificity = (spec_raw * 0.01)
+    ppv = PVCalculator(prevalence, sensitivity, specificity).ppv()
+    npv = PVCalculator(prevalence, sensitivity, specificity).npv()
+    row = pd.DataFrame({"specificity": [specificity*100], "ppv": [ppv*100], "npv": [npv*100]})
+    pvs = pvs.append(row, ignore_index=True)
 
-    ppv = prob_has_problem_tests_positive() / (prob_has_problem_tests_positive() + prob_no_problem_tests_positive())
-    row = pd.DataFrame({"specificity": [specificity*100], "ppv": [ppv*100]})
-    ppvs = ppvs.append(row, ignore_index=True)
-plt.figure()
-
-ax = sns.lineplot(x=ppvs["specificity"], y=ppvs["ppv"])
-ax.set(xlabel="Specificity (%)", ylabel="Positive Predictive Value (%)")
-plt.savefig('vary_specificity.png')
-
-print(ppvs.head(20))
-print(ppvs.tail(20))
-
-
-
-#
-# ax = ppvs.plot(x="ppv", y="sensitivity", legend=False)
-# ax2 = ax.twinx()
-# ppvs.plot(x="ppv", y="specificity", ax=ax2, legend=False, color="r")
-# ax.figure.legend()
-# plt.show()
+draw_graph(pvs, "specificity", "ppv")
+draw_graph(pvs, "specificity", "npv")
