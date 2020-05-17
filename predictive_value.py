@@ -35,38 +35,42 @@ class PVCalculator:
 
 def draw_graph(dataframe, metric_type, y_name):
     plt.figure()
+    sns.set(font_scale=1.2)
+    sns.set_style("whitegrid", {'axes.grid': False})
+    sns.set_context("notebook", font_scale=1.2, rc={"lines.linewidth": 3})
+
     ax = sns.lineplot(x=dataframe[metric_type], y=dataframe[y_name])
-    ax.set(xlabel=f"{metric_type.title()} (%)", ylabel=f"{y_name.upper()} (%)")
+    ax.set(xlabel=f"{metric_type.title()} (%)", ylabel=f"{y_name.title()} (%)")
     plt.ylim(0, 100)
     plt.xlim(0, 100)
-    plt.savefig(f"{y_name}__vary_{metric_type}.png")
+    plt.savefig(f"{y_name.replace(' ', '_')}__vary_{metric_type.replace(' ', '_')}.svg",  format="svg")
 
 
-prevalence = 0.5
-
-pvs = pd.DataFrame()
-specificity = 0.99
-sensitivity = 0.99
-for sens_raw in range(1, 101):
-    sensitivity = (sens_raw * 0.01)
-    ppv = PVCalculator(prevalence, sensitivity, specificity).ppv()
-    npv = PVCalculator(prevalence, sensitivity, specificity).npv()
-    row = pd.DataFrame({"sensitivity": [sensitivity*100], "ppv": [ppv*100], "npv": [npv*100]})
-    pvs = pvs.append(row, ignore_index=True)
-
-draw_graph(pvs, "sensitivity", "ppv")
-draw_graph(pvs, "sensitivity", "npv")
-
+prevalence = 0.05
 
 pvs = pd.DataFrame()
-specificity = 0.99
-sensitivity = 0.99
-for spec_raw in range(1, 101):
-    specificity = (spec_raw * 0.01)
+specificity = 0.999
+# sensitivity = 0.98
+for sens_raw in range(1, 1001):
+    sensitivity = (sens_raw * 0.001)
     ppv = PVCalculator(prevalence, sensitivity, specificity).ppv()
     npv = PVCalculator(prevalence, sensitivity, specificity).npv()
-    row = pd.DataFrame({"specificity": [specificity*100], "ppv": [ppv*100], "npv": [npv*100]})
+    row = pd.DataFrame({"sensitivity": [sensitivity*100], "Positive Predictive Value": [ppv*100], "Negative Predictive Value": [npv*100]})
     pvs = pvs.append(row, ignore_index=True)
 
-draw_graph(pvs, "specificity", "ppv")
-draw_graph(pvs, "specificity", "npv")
+draw_graph(pvs, "sensitivity", "Positive Predictive Value")
+draw_graph(pvs, "sensitivity", "Negative Predictive Value")
+
+
+pvs = pd.DataFrame()
+# specificity = 0.98
+sensitivity = 0.999
+for spec_raw in range(1, 1001):
+    specificity = (spec_raw * 0.001)
+    ppv = PVCalculator(prevalence, sensitivity, specificity).ppv()
+    npv = PVCalculator(prevalence, sensitivity, specificity).npv()
+    row = pd.DataFrame({"specificity": [specificity*100], "Positive Predictive Value": [ppv*100], "Negative Predictive Value": [npv*100]})
+    pvs = pvs.append(row, ignore_index=True)
+
+draw_graph(pvs, "specificity", "Positive Predictive Value")
+draw_graph(pvs, "specificity", "Negative Predictive Value")
