@@ -50,7 +50,6 @@ prevalence = 0.05
 
 pvs = pd.DataFrame()
 specificity = 0.999
-# sensitivity = 0.98
 for sens_raw in range(1, 1001):
     sensitivity = (sens_raw * 0.001)
     ppv = PVCalculator(prevalence, sensitivity, specificity).ppv()
@@ -63,7 +62,6 @@ draw_graph(pvs, "sensitivity", "Negative Predictive Value")
 
 
 pvs = pd.DataFrame()
-# specificity = 0.98
 sensitivity = 0.999
 for spec_raw in range(1, 1001):
     specificity = (spec_raw * 0.001)
